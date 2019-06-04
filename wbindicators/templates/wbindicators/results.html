@@ -1,0 +1,16 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'wbindicators/minimal_table.css' %}">
+<h1>Your Results</h1>
+
+<table>
+  <tr>
+    {% for k, d in data.items %}
+      <td>
+        {{ k }}
+      </td>
+      <td>
+        {{ d }}
+      </td>
+    {% endfor %}
+  </tr>
+</table>
