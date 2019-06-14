@@ -2,20 +2,19 @@
 <link rel="stylesheet" type="text/css" href="{% static 'wbindicators/minimal_table.css' %}">
 <h1>Your Results</h1>
 
-{{ data }}
-{% for n, d in data.items %}
+{% for meta, figs in data.items %}
 <div class="{{n}}">
 
 <table>
-  <caption>{{ n.country }}</caption>
+  <caption>{{ meta.country }}</caption>
 <tr>
   <td>year</td>
-  <td>{{n.indicname}}</td>
+  <td>{{meta.readable}}</td>
 </tr>
-  {% for k, v in d.items %}
+  {% for yr, v in figs.items %}
   <tr>
       <td>
-        {{ k }}
+        {{ yr }}
       </td>
       <td>
         {{ v }}

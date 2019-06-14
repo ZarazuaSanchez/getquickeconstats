@@ -1,0 +1,17 @@
+{{ form.non_field_errors }}
+
+<form action="{% url 'wbindicators:view-results' %}" method="post">
+{% csrf_token %}
+  <p>
+    {{ form.my_country.errors }}
+    {{ form.my_country.label_tag }} {{ form.my_country }}
+  </p>
+  <p>
+    {{ form.my_indicator.errors }}
+    {{ form.my_country.label_tag }} {{ form.my_indicator }}
+  </p>
+  <p>
+    {{ form.from_.label_tag }} {{ form.from_ }}   {{ form.to_.label_tag }} {{ form.to_ }}
+  </p>
+<input type="submit" name="" value="Submit">
+</form>

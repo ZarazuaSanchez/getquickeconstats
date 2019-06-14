@@ -1,87 +1,79 @@
 from django.shortcuts import render
 from django.template import loader
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 # Create your views here.
 from django.shortcuts import render
 from django.http import HttpResponse
 
-# Create your views here.
-
 from django.http import HttpResponseRedirect
 from .models import IndicatorForm
 
-import wbdata, wbpy
+from . import views
 
+import wbdata, wbpy
 api = wbpy.IndicatorAPI()
+
+def form_to_data(myform):
+    country = myform.cleaned_data['my_country']
+    indicator = myform.cleaned_data['my_indicator']
+    fromyr = int(myform.cleaned_data['from_'])
+    toyr = myform.cleaned_data['to_']
+
+    try:
+        if toyr:
+            toyr = int(toyr)
+            data = wbdata.get_data( indicator,
+                                    [country],
+                                    data_date=(datetime(fromyr, 1, 1), datetime(toyr, 1, 1)))
+        else:
+            data = wbdata.get_data( indicator,
+                                    [country],
+                                    data_date=datetime(fromyr, 1, 1))
+        return data
+
+    except IndexError('No data'):
+        return render(request, 'request_stats.html', {'form': myform})
 
 from datetime import datetime
 from collections import OrderedDict, namedtuple
+IndicInfo = namedtuple('IndicInfo', 'country readable')
 
-IndicInfo = namedtuple('IndicInfo', 'country indicname')
+def parse_wbdata(wbdata, indicator, country):
+    wbindics = api.get_indicators(search=indicator)
+    readable = wbindics[indicator]['name']
 
-def home(request):
+    indicinfo = IndicInfo(country, readable)
+
+    dictdata = {indicinfo: {}}
+
+    for x in wbdata:
+        dictdata[indicinfo][x['date']] = x['value']
+
+    return dictdata
+
+def request_stats(request):
     form = IndicatorForm()
-    temp = loader.get_template('requestindic.html')
+    temp = loader.get_template('request_stats.html')
     return HttpResponse(temp.render({'form': form}, request))
 
-    #return HttpResponseRedirect(reverse('wbindicators:view_results', kwargs={'wbdata': data.as_dict()['MX'], } ))
-
-#reverse cannot find view_results with Indicator
 def view_results(request):
 
-    myform = IndicatorForm(request.POST)
-
-    if myform.is_valid():
-        country = myform.cleaned_data['my_country'] #request.POST['my_country']
-        indicator = myform.cleaned_data['my_indicator']#request.POST['my_indicator']
-        fromyr = myform.cleaned_data['from_year'] #request.POST['from_']
-        toyr = myform.cleaned_data['to_year'] #request.POST['to']
-
-    #country = ['MX'] request.POST['my_country'
-    #indicator = 'EN.ATM.CO2E.KT' #request.POST['my_indicator']
-    #year = '2001' #request.POST['year']
-
-        if toyr:
-            data = (wbdata.get_data(indicator,
-                    [country],
-                    data_date=( datetime(int(fromyr), 1, 1), datetime(int(toyr), 1, 1))))
-        else:
-            data = (wbdata.get_data(indicator,
-                    [country],
-                    data_date=( datetime(int(fromyr), 1, 1))))
-        
-        wbindics = api.get_indicators(search=indicator)
-        indicname = wbindics[indicator]['name']
-
-        indinfo = IndicInfo(country, indicname)
-
-        dictdata = {indinfo: {}}
-
-        #collect dict of years and corresponding data
-        for x in data:
-            dictdata[indinfo][x['date']] = x['value']
-
-        return render(request, 'results.html', {'data': dictdata } )
-
-"""def home(request):
-    # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        # create a form instance and populate it with data from the request:
-        form = IndicatorForm(request.POST)
-        # check whether it's valid:
-        if form.is_valid():
+        myform = IndicatorForm(request.POST)
 
-            if form.is_bound():
+        if myform.is_valid():
+            wbdata = form_to_data(myform)
+            dictdata = parse_wbdata(
+                                    wbdata,
+                                    myform.cleaned_data['my_indicator'],
+                                    myform.cleaned_data['my_country']
+            )
 
-            # process the data in form.cleaned_data as required
-            # ...
-            # redirect to a new URL:
+            return render(request, 'results.html', {'data': dictdata})
+        #return HttpResponseRedirect(reverse('wbindicators:view_results', kwargs={'request': request, 'dictdata':dictdata}))
+        #, kwargs={'dictdatva': dictdata, }))
 
-                return HttpResponseRedirect('/thanks/')
-
-    # if a GET (or any other method) we'll create a blank form
     else:
-        form = IndicatorForm()
+        myform = IndicatorForm()
 
-    return render(request, 'requestindic.html', {'form': form})"""
-    #return render(request, 'results.html', {'data': form})
+    return render(request, 'request_stats.html', {'form': myform})

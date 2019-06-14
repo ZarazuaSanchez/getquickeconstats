@@ -4,7 +4,7 @@ from . import views
 
 app_name = 'wbindicators'
 urlpatterns = [
-    path('', views.home, name='home'),
-    path('myresults/', views.view_results, name='view_results'),
-    #path('get_data/', views.get_data, name='get_data'),
+    path('', views.request_stats, name='request-stats'),
+    #path('get_stats/', views.get_stats, name='get-stats'),
+    path('view_results/', views.view_results, name='view-results'),
 ]

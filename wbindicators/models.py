@@ -27,6 +27,26 @@ class IndicatorForm(forms.Form):
     my_indicator = forms.ChoiceField(choices=indic_choices)
 
     years = [( int(y), y ) for y in range( d.today().year - 1, 1959, -1 ) ]
-    from_year = forms.ChoiceField(choices=years)
+    from_ = forms.ChoiceField(choices=years)
     years.insert(0, (None, 'Select a year'))
-    to_year = forms.ChoiceField(choices=years, initial=(None, 'Select a year'), required=False)
+    to_ = forms.ChoiceField(choices=years, initial=(None, 'Select a year'), required=False)
+
+    def is_valid(self):
+        other_valid = forms.Form.is_valid(self)
+
+        from_year = self.cleaned_data['from_']
+        to_year = self.cleaned_data['to_']
+
+        if to_year or from_year:
+            return True and other_valid
+        else:
+            return False and other_valid
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_year = cleaned_data.get("from_")
+        to_year = cleaned_data.get("to_")
+
+        if to_year:
+            if int(from_year) > int(to_year):
+                raise forms.ValidationError("Second year must be later than 1st year.")
